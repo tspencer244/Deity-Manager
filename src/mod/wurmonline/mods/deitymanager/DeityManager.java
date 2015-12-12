@@ -43,6 +43,7 @@ import java.util.Set;
 //import java.util.logging.Level;
 //import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.io.InputStream;
 
 public class DeityManager implements Configurable, Initable, PreInitable, ServerStartedListener, WurmMod {
     private static Logger logger = Logger.getLogger(DeityManager.class.getName());
@@ -50,6 +51,7 @@ public class DeityManager implements Configurable, Initable, PreInitable, Server
     DeityData[] deities;
     DeityPropertySheet deityPropertySheet;
     int lastSelectedDeity;
+    InputStream is;
     //private boolean rebuilding = false;
     //private final ChangeListener<DeityData> listener = (observable, oldValue, newValue) -> deitiesListChanged();
     //private ResourceBundle messages = LocaleHelper.getBundle("DeityManager");
@@ -145,7 +147,7 @@ public class DeityManager implements Configurable, Initable, PreInitable, Server
     
     @Override
     public void preInit() {
-        ClassPool pool = HookManager.getInstance().getClassPool();
+    	ClassPool pool = HookManager.getInstance().getClassPool();
         try {
 
             CtClass deity = pool.get("com.wurmonline.server.deities.Deity");
@@ -186,7 +188,8 @@ public class DeityManager implements Configurable, Initable, PreInitable, Server
             CtClass dbConnector = pool.get("com.wurmonline.server.DbConnector");
 
             pool.get("com.wurmonline.server.DbConnector$WurmDatabaseSchema").detach();
-            pool.makeClass(DeityManager.class.getResourceAsStream("DbConnector$WurmDatabaseSchema.class"));
+            is = DeityManager.class.getResourceAsStream("DbConnector$WurmDatabaseSchema.class"); 
+            pool.makeClass(is);
             dbConnector.rebuildClassFile();
 
             dbConnector.getDeclaredMethod("initialize").insertAfter(
@@ -213,9 +216,14 @@ public class DeityManager implements Configurable, Initable, PreInitable, Server
 
         } catch (NotFoundException | CannotCompileException | IOException ex) {
             logger.warning("Error when creating dbConnector method.");
+            System.out.println(ex.getMessage());
+            System.out.println(ex.getLocalizedMessage());
+            System.out.println(ex.toString());
             ex.printStackTrace();
             System.exit(-1);
         }
+        
+        deities = DeityDBInterface.getAllData();
     }
 
     @Override
