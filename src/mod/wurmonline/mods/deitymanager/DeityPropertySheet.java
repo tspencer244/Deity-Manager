@@ -1,6 +1,6 @@
 package mod.wurmonline.mods.deitymanager;
 
-import com.ibm.icu.text.MessageFormat;
+//import com.ibm.icu.text.MessageFormat;
 import com.wurmonline.server.MiscConstants;
 import com.wurmonline.server.spells.Spell;
 import javafx.collections.FXCollections;
@@ -8,7 +8,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import mod.wurmonline.serverlauncher.LocaleHelper;
+//import mod.wurmonline.serverlauncher.LocaleHelper;
 import org.controlsfx.control.PropertySheet;
 
 import java.util.*;
@@ -19,39 +19,39 @@ public class DeityPropertySheet extends VBox implements MiscConstants {
     private static Logger logger = Logger.getLogger(DeityPropertySheet.class.getName());
     private DeityData currentDeity;
     private ObservableList<PropertySheet.Item> list;
-    private Set<Enum> changedProperties = new HashSet<>();
+	private Set<Enum<?>> changedProperties = new HashSet<>();
     private Map<String, Spell> stored_spells = new HashMap<>();
-    private ResourceBundle messages = LocaleHelper.getBundle("DeityManager");
+    //private ResourceBundle messages = LocaleHelper.getBundle("DeityManager");
 
     public DeityPropertySheet(DeityData deity, Spell[] allSpells, boolean serverRunning) {
         currentDeity = deity;
         list = FXCollections.observableArrayList();
-        String deity_category = messages.getString("deity_category");
-        list.add(new deityItem(DeityPropertyType.NAME, deity_category, messages.getString("name"), messages.getString("name_description"), !serverRunning, deity.getName()));
-        list.add(new deityItem(DeityPropertyType.NUMBER, deity_category, messages.getString("number"), messages.getString("number_description"), false, deity.getNumber()));
-        list.add(new deityItem(DeityPropertyType.ALIGNMENT, deity_category, messages.getString("alignment"), messages.getString("alignment_description"), true, deity.getAlignment()));
-        list.add(new deityItem(DeityPropertyType.SEX, deity_category, messages.getString("sex"), messages.getString("sex_description"), !serverRunning, deity.getSex()));
-        list.add(new deityItem(DeityPropertyType.POWER, deity_category, messages.getString("power"), messages.getString("power_description"), true, deity.getPower()));
-        list.add(new deityItem(DeityPropertyType.FAITH, deity_category, messages.getString("faith"), messages.getString("faith_description"), true, deity.getFaith()));
-        list.add(new deityItem(DeityPropertyType.HOLYITEM, deity_category, messages.getString("holy_item"), messages.getString("holy_item_description"), !serverRunning, deity.getHolyItem()));
-        list.add(new deityItem(DeityPropertyType.FAVOR, deity_category, messages.getString("favor"), messages.getString("favor_description"), true, deity.getFavor()));
-        list.add(new deityItem(DeityPropertyType.ATTACK, deity_category, messages.getString("attack"), messages.getString("attack_description"), true, deity.getAttack()));
-        list.add(new deityItem(DeityPropertyType.VITALITY, deity_category, messages.getString("vitality"), messages.getString("vitality_description"), true, deity.getVitality()));
+        String deity_category = "Deity";
+        list.add(new deityItem(DeityPropertyType.NAME, deity_category, "Name", "Name (limit 40 characters, longer names will be truncated.)", !serverRunning, deity.getName()));
+        list.add(new deityItem(DeityPropertyType.NUMBER, deity_category, "Number", "Deity number", false, deity.getNumber()));
+        list.add(new deityItem(DeityPropertyType.ALIGNMENT, deity_category, "Alignment", "The deities alignment.", true, deity.getAlignment()));
+        list.add(new deityItem(DeityPropertyType.SEX, deity_category, "Sex", "Deity Gender (0 = Male, 1 = Female)", !serverRunning, deity.getSex()));
+        list.add(new deityItem(DeityPropertyType.POWER, deity_category, "Power", "Power", true, deity.getPower()));
+        list.add(new deityItem(DeityPropertyType.FAITH, deity_category, "Faith", "Faith", true, deity.getFaith()));
+        list.add(new deityItem(DeityPropertyType.HOLYITEM, deity_category, "Holy Item", "Holy Item", !serverRunning, deity.getHolyItem()));
+        list.add(new deityItem(DeityPropertyType.FAVOR, deity_category, "Favor", "Favor", true, deity.getFavor()));
+        list.add(new deityItem(DeityPropertyType.ATTACK, deity_category, "Attack", "Attack", true, deity.getAttack()));
+        list.add(new deityItem(DeityPropertyType.VITALITY, deity_category, "Vitality", "Vitality", true, deity.getVitality()));
 
         // Spells
         stored_spells.clear();
         for (Spell spell : allSpells) {
             boolean allowed = deity.hasSpell(spell);
-            String category = allowed ? messages.getString("allowed") : messages.getString("not_allowed");
+            String category = allowed ? "Currently Allowed" : "Other Spells";
             stored_spells.put(spell.getName(), spell);
-            list.add(new SpellItem(SpellPropertyType.ALLOWED, category, spell.getName(), messages.getString("description"), true, allowed));
+            list.add(new SpellItem(SpellPropertyType.ALLOWED, category, spell.getName(), "Priests of selected deity may cast this spell.", true, allowed));
         }
 
 
         PropertySheet propertySheet = new PropertySheet(list);
         VBox.setVgrow(propertySheet, Priority.ALWAYS);
         if (serverRunning) {
-            this.getChildren().add(new Label(messages.getString("server_running")));
+            this.getChildren().add(new Label("The server is still running, some values cannot be altered."));
         }
         this.getChildren().add(propertySheet);
     }
@@ -107,8 +107,8 @@ public class DeityPropertySheet extends VBox implements MiscConstants {
                     }
                 } catch (Exception ex) {
                     saveAtAll = false;
-                    toReturn = toReturn + MessageFormat.format(messages.getString("invalid_value"), item.getCategory(), item.getValue());
-                    logger.log(Level.INFO, MessageFormat.format(messages.getString("error"), ex.getMessage()), ex);
+                    toReturn = toReturn + "Invalid value " + item.getCategory() + ": " + item.getValue() + ".";
+                    logger.log(Level.INFO, "Error " + ex.getMessage() + ".", ex);
                 }
             }
         }

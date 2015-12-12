@@ -4,7 +4,7 @@
 //
 package mod.wurmonline.mods.deitymanager;
 
-import com.ibm.icu.text.MessageFormat;
+//import com.ibm.icu.text.MessageFormat;
 import com.wurmonline.server.DbConnector;
 import com.wurmonline.server.deities.Deities;
 import com.wurmonline.server.deities.Deity;
@@ -12,16 +12,16 @@ import com.wurmonline.server.spells.Spell;
 import com.wurmonline.server.spells.SpellGenerator;
 import com.wurmonline.server.spells.Spells;
 import com.wurmonline.server.utils.DbUtilities;
-import mod.wurmonline.serverlauncher.LocaleHelper;
+//import mod.wurmonline.serverlauncher.LocaleHelper;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+//import java.nio.file.Files;
+//import java.nio.file.Paths;
 import java.sql.*;
 import java.util.HashSet;
-import java.util.ResourceBundle;
+//import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -30,12 +30,12 @@ import java.util.logging.Logger;
 public class DeityDBInterface {
     private static final String GET_ALL_DEITIES = "SELECT * FROM DEITIES";
     private static final String GET_ALL_DEITY_SPELLS = "SELECT * FROM DEITY_SPELLS WHERE DEITY=?";
-    private static final String ADD_SPELL_LINK = "INSERT INTO DEITY_SPELLS(SPELL,DEITY,ALLOWED) VALUES(?,?,?)";
+    private static final String ADD_SPELL_LINK = "INSERT INTO DEITY_SPELLS(SPELL,SPELLNAME,DEITY,ALLOWED) VALUES(?,?,?,?)";
     private static final String SAVE_DEITY = "UPDATE DEITIES SET NAME=?, ALIGNMENT=?, SEX=?, POWER=?, FAITH=?, HOLYITEM=?, FAVOR=?, ATTACK=?, VITALITY=? WHERE ID=?";
     private static final String SAVE_DEITY_SPELL = "UPDATE DEITY_SPELLS SET ALLOWED=? WHERE SPELL=? AND DEITY=?";
     private static final Logger logger = Logger.getLogger(DeityDBInterface.class.getName());
     private static final ConcurrentHashMap<String, DeityData> deityData = new ConcurrentHashMap<>();
-    private static ResourceBundle messages = LocaleHelper.getBundle("DeityManager");
+    //private static ResourceBundle messages = LocaleHelper.getBundle("DeityManager");
 
     public static void loadAllData() {
         deityData.clear();
@@ -52,17 +52,21 @@ public class DeityDBInterface {
             drs = deityPS.executeQuery();
             Method getSpellsDbCon = ReflectionUtil.getMethod(DbConnector.class, "getSpellsDbCon");
             Spell[] allSpells = Spells.getAllSpells();
+            
             if (allSpells.length == 0) {
                 SpellGenerator.createSpells();
                 allSpells = Spells.getAllSpells();
             }
+            
             spellCon = (Connection)getSpellsDbCon.invoke(DbConnector.class);
+            
             if (!spellCon.getMetaData().getTables(null, null, "DEITY_SPELLS", null).next()) {
                 Statement create = spellCon.createStatement();
                 create.executeUpdate("CREATE TABLE DEITY_SPELLS\n" +
                         "(\n" +
                         "    _ID                 INTEGER         NOT NULL PRIMARY KEY,\n" +
                         "    SPELL               INTEGER         NOT NULL,\n" +
+                        "    SPELLNAME           TEXT            NOT NULL,\n" +
                         "    DEITY               TINYINT         NOT NULL,\n" +
                         "    ALLOWED             TINYINT(1)      NOT NULL\n" +
                         ");");
@@ -91,16 +95,18 @@ public class DeityDBInterface {
                 srs = spellPS.executeQuery();
 
                 Set<Integer> spells = new HashSet<>();
+                
                 while (srs.next()) {
                     if (srs.getByte("ALLOWED") == 1) {
                         spells.add(srs.getInt("SPELL"));
                     }
                 }
+                
                 deity.setSpells(spells);
                 DeityDBInterface.deityData.put(deityName, deity);
             }
         } catch (SQLException | NoSuchMethodException | InvocationTargetException | IllegalAccessException ex) {
-            logger.log(Level.WARNING, messages.getString("failed_to_load"), ex);
+            logger.log(Level.WARNING, "Failed to load all deity data from database.", ex);
         } finally {
             DbUtilities.closeDatabaseObjects(deityPS, drs);
             DbUtilities.closeDatabaseObjects(spellPS, srs);
@@ -159,7 +165,7 @@ public class DeityDBInterface {
             spellCon.commit();
             spellCon.setAutoCommit(autoCommit);
         } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException ex) {
-            logger.log(Level.WARNING, messages.getString("failed_to_commit"), ex);
+            logger.log(Level.WARNING, "Failed to save all deity data to the database.", ex);
         } finally {
             DbConnector.returnConnection(deityCon);
             DbConnector.returnConnection(spellCon);
@@ -178,11 +184,12 @@ public class DeityDBInterface {
 
                 for (Spell spell : allSpells) {
                     ps.setInt(1, spell.number);
-                    ps.setByte(2, (byte) deity.getNumber());
+                    ps.setString(2, spell.getName());
+                    ps.setByte(3, (byte) deity.getNumber());
                     if (deitySpells.contains(spell)) {
-                        ps.setByte(3, (byte) 1);
+                        ps.setByte(4, (byte) 1);
                     } else {
-                        ps.setByte(3, (byte) 0);
+                        ps.setByte(4, (byte) 0);
                     }
                     ps.addBatch();
                 }
@@ -193,7 +200,7 @@ public class DeityDBInterface {
             con.setAutoCommit(autoCommit);
         } catch(SQLException ex){
             String name = deity != null ? deity.getName() : "Unknown";
-            logger.log(Level.WARNING, MessageFormat.format(messages.getString("failed_to_fill"), name), ex);
+            logger.log(Level.WARNING, "Failed to add default spells to db for " + name + ". " + ex.getMessage(), ex);
         }
     }
 }

@@ -1,57 +1,65 @@
 package mod.wurmonline.mods.deitymanager;
 
-import com.ibm.icu.text.MessageFormat;
+//import com.ibm.icu.text.MessageFormat;
 import com.wurmonline.server.ServerDirInfo;
 import com.wurmonline.server.deities.Deities;
 import com.wurmonline.server.deities.Deity;
+//import com.wurmonline.server.players.DbPlayerInfo;
 import com.wurmonline.server.spells.Spell;
 import com.wurmonline.server.spells.Spells;
-import javafx.beans.value.ChangeListener;
-import javafx.event.EventHandler;
-import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.control.*;
-import javafx.scene.input.InputEvent;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.Region;
-import javafx.util.Callback;
+//import javafx.beans.value.ChangeListener;
+//import javafx.event.EventHandler;
+//import javafx.fxml.FXML;
+//import javafx.fxml.FXMLLoader;
+//import javafx.scene.control.*;
+//import javafx.scene.input.InputEvent;
+//import javafx.scene.input.KeyEvent;
+//import javafx.scene.input.MouseEvent;
+//import javafx.scene.layout.Pane;
+//import javafx.scene.layout.Region;
+//import javafx.util.Callback;
 import javassist.*;
-import mod.wurmonline.serverlauncher.LocaleHelper;
-import mod.wurmonline.serverlauncher.gui.ServerGuiController;
+//import mod.wurmonline.serverlauncher.LocaleHelper;
+//import mod.wurmonline.serverlauncher.gui.ServerGuiController;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
+//import org.gotti.wurmunlimited.modloader.classhooks.HookException;
 import org.gotti.wurmunlimited.modloader.classhooks.HookManager;
+//import org.gotti.wurmunlimited.modloader.classhooks.InvocationHandlerFactory;
+import org.gotti.wurmunlimited.modloader.interfaces.Configurable;
+import org.gotti.wurmunlimited.modloader.interfaces.Initable;
 import org.gotti.wurmunlimited.modloader.interfaces.PreInitable;
 import org.gotti.wurmunlimited.modloader.interfaces.ServerStartedListener;
 import org.gotti.wurmunlimited.modloader.interfaces.WurmMod;
-import org.gotti.wurmunlimited.modloader.interfaces.WurmUIMod;
+//import org.gotti.wurmunlimited.modloader.interfaces.WurmUIMod;
 
 import java.io.IOException;
+//import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.sql.SQLException;
-import java.util.ResourceBundle;
+import java.util.Properties;
+//import java.sql.SQLException;
+//import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.logging.Level;
+//import java.util.logging.Level;
+//import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStartedListener {
+public class DeityManager implements Configurable, Initable, PreInitable, ServerStartedListener, WurmMod {
     private static Logger logger = Logger.getLogger(DeityManager.class.getName());
-    ServerGuiController controller;
+    //ServerGuiController controller;
     DeityData[] deities;
     DeityPropertySheet deityPropertySheet;
     int lastSelectedDeity;
-    private boolean rebuilding = false;
-    private final ChangeListener<DeityData> listener = (observable, oldValue, newValue) -> deitiesListChanged();
-    private ResourceBundle messages = LocaleHelper.getBundle("DeityManager");
+    //private boolean rebuilding = false;
+    //private final ChangeListener<DeityData> listener = (observable, oldValue, newValue) -> deitiesListChanged();
+    //private ResourceBundle messages = LocaleHelper.getBundle("DeityManager");
 
-    @Override
+    /*@Override
     public String getName() {
         return messages.getString("mod_name");
-    }
+    }*/
 
-    @Override
+    /*@Override
     public Region getRegion(ServerGuiController guiController) {
         controller = guiController;
         try {
@@ -66,8 +74,75 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
         Pane pane = new Pane();
         pane.getChildren().add(label);
         return pane;
-    }
+    }*/
+    
+    @Override
+	public void configure(Properties properties) {
+		/*removePriestRestrictions = Boolean.parseBoolean(properties.getProperty("removePriestRestrictions", Boolean.toString(removePriestRestrictions)));
+		favorLimit = Integer.parseInt(properties.getProperty("favorLimit", Integer.toString(favorLimit)));
+		allowAllSpells = Boolean.parseBoolean(properties.getProperty("allowAllSpells", Boolean.toString(allowAllSpells)));
+		allowLightSpells = Boolean.parseBoolean(properties.getProperty("allowLightSpells", Boolean.toString(allowLightSpells)));
+		unlimitedPrayers = Boolean.parseBoolean(properties.getProperty("unlimitedPrayers", Boolean.toString(unlimitedPrayers)));
+		noPrayerDelay = Boolean.parseBoolean(properties.getProperty("noPrayerDelay", Boolean.toString(noPrayerDelay)));
 
+		logger.log(Level.INFO, "removePriestRestrictions: " + removePriestRestrictions);
+		logger.log(Level.INFO, "favorLimit: " + favorLimit);
+		logger.log(Level.INFO, "allowAllSpells: " + allowAllSpells);
+		logger.log(Level.INFO, "allowLightSpells: " + allowLightSpells);
+		logger.log(Level.INFO, "unlimitedPrayers: " + unlimitedPrayers);
+		logger.log(Level.INFO, "noPrayerDelay: " + noPrayerDelay);*/
+		
+	}
+    
+    @Override
+	public void init() {
+		/*if (unlimitedPrayers || noPrayerDelay) {
+			HookManager.getInstance().registerHook("com.wurmonline.server.players.DbPlayerInfo", "setNumFaith", "(BJ)V", new InvocationHandlerFactory() {
+				
+				@Override
+				public InvocationHandler createInvocationHandler() {
+					return new InvocationHandler() {
+
+						@Override
+						public Object invoke(Object object, Method method, Object[] args) throws Throwable {
+							DbPlayerInfo dbPlayerInfo = (DbPlayerInfo) object;
+							if (unlimitedPrayers) {
+								args[0] = dbPlayerInfo.numFaith = 0;
+							}
+							if (noPrayerDelay) {
+								args[1] = dbPlayerInfo.lastFaith = 0;
+							}
+
+							return method.invoke(object, args);
+						}
+					};
+				}
+			});
+			
+			HookManager.getInstance().registerHook("com.wurmonline.server.players.PlayerInfo", "checkPrayerFaith", "()Z", new InvocationHandlerFactory() {
+				
+				@Override
+				public InvocationHandler createInvocationHandler() {
+					return new InvocationHandler() {
+
+						@Override
+						public Object invoke(Object object, Method method, Object[] args) throws Throwable {
+							DbPlayerInfo dbPlayerInfo = (DbPlayerInfo) object;
+							if (unlimitedPrayers) {
+								dbPlayerInfo.numFaith = 0;
+							}
+							if (noPrayerDelay) {
+								dbPlayerInfo.lastFaith = 0;
+							}
+
+							return method.invoke(object, args);
+						}
+					};
+				}
+			});
+		}*/
+	}
+    
     @Override
     public void preInit() {
         ClassPool pool = HookManager.getInstance().getClassPool();
@@ -91,7 +166,7 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
                     "}", deity);
             deity.addMethod(method);
         } catch (NotFoundException | CannotCompileException ex) {
-            logger.warning(messages.getString("removespell_error"));
+            logger.warning("Error when creating removeSpell method.");
             ex.printStackTrace();
             System.exit(-1);
         }
@@ -102,7 +177,7 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
             createSpells.insertBefore("{ if (com.wurmonline.server.spells.Spells.getAllSpells().length != 0) { return; } }");
             spellGenerator.writeFile();
         } catch (NotFoundException | CannotCompileException | IOException ex) {
-            logger.warning(messages.getString("spell_generator_error"));
+            logger.warning("Error when modifying SpellGenerator method.");
             ex.printStackTrace();
             System.exit(-1);
         }
@@ -137,7 +212,7 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
             dbConnector.writeFile();
 
         } catch (NotFoundException | CannotCompileException | IOException ex) {
-            logger.warning(messages.getString("dbconnector_error"));
+            logger.warning("Error when creating dbConnector method.");
             ex.printStackTrace();
             System.exit(-1);
         }
@@ -165,13 +240,13 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
                 for (Spell spell : Spells.getAllSpells()) {
                     if (deitySpells.contains(spell)) {
                         if (!deityData.hasSpell(spell)) {
-                            logger.info(MessageFormat.format(messages.getString("removing_spell"), spell.getName(), deity.getName()));
+                            logger.info("Removing " + spell.getName() + " from " + deity.getName() + ".");
                             removeSpell.invoke(deity, spell);
                             assert !deity.hasSpell(spell);
                         }
                     } else {
                         if (deityData.hasSpell(spell)) {
-                            logger.info(MessageFormat.format(messages.getString("adding_spell"), spell.getName(), deity.getName()));
+                            logger.info("Adding " + spell.getName() + " to " + deity.getName() + ".");
                             deity.addSpell(spell);
                             assert deity.hasSpell(spell);
                         }
@@ -179,17 +254,17 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
                 }
             }
         } catch (InvocationTargetException | NoSuchMethodException | IllegalAccessException | NoSuchFieldException ex) {
-            logger.warning(messages.getString("applying_server_settings_error"));
+            logger.warning("An error occurred whilst trying to change the settings on the server:");
             ex.printStackTrace();
         }
     }
 
-    @FXML
-    ListView<DeityData> deitiesList;
-    @FXML
-    ScrollPane deityProperties;
+    /*@FXML
+    ListView<DeityData> deitiesList;*/
+    /*@FXML
+    ScrollPane deityProperties;*/
 
-    @FXML
+    /*@FXML
     void populateDeitiesList () {
         rebuilding = true;
 
@@ -210,9 +285,9 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
 
         rebuilding = false;
         deitiesListChanged();
-    }
+    }*/
 
-    @FXML
+    /*@FXML
     void deitiesListChanged () {
         if (!rebuilding) {
             DeityData selectedDeity = deitiesList.getSelectionModel().getSelectedItem();
@@ -225,9 +300,9 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
                 deityPropertySheet.requestFocus();
             }
         }
-    }
+    }*/
 
-    ButtonType saveCheck() {
+    /*ButtonType saveCheck() {
         if (deityPropertySheet != null && deityPropertySheet.haveChanges()) {
             ButtonType result = controller.showYesNoCancel(messages.getString("changes_title"), messages.getString("changes_header"), messages.getString("changes_message")).get();
             if (result == ButtonType.YES) {
@@ -236,9 +311,9 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
             return result;
         }
         return new ButtonType("", ButtonBar.ButtonData.NO);
-    }
+    }*/
 
-    @FXML
+    /*@FXML
     void saveDeity () {
         String error = deityPropertySheet.save();
         if (error != null && error.length() > 0 ) {
@@ -263,9 +338,9 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
                                     MessageFormat.format(messages.getString("save_error_message"), error));
         }
         populateDeitiesList();
-    }
+    }*/
 
-    @FXML
+    /*@FXML
     public void initialize () {
         ButtonType check = saveCheck();
         if (check == ButtonType.CANCEL) {
@@ -297,5 +372,5 @@ public class DeityManager implements WurmMod, WurmUIMod, PreInitable, ServerStar
             }
         });
         populateDeitiesList();
-    }
+    }*/
 }

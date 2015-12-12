@@ -1,6 +1,6 @@
 package com.wurmonline.server;
 
-import java.lang.String;
+//import java.lang.String;
 
 public enum DbConnector$WurmDatabaseSchema {
     CREATURES("WURMCREATURES"),
