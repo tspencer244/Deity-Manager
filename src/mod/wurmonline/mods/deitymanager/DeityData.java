@@ -1,12 +1,7 @@
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
 package mod.wurmonline.mods.deitymanager;
 
 import com.wurmonline.server.MiscConstants;
 import com.wurmonline.server.spells.Spell;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 
 import java.sql.SQLException;
 import java.util.Set;
@@ -33,8 +28,6 @@ public class DeityData implements MiscConstants {
     public void setName(String name) {
         this.name = name;
     }
-
-    public StringProperty getNameProperty () { return new SimpleStringProperty(this.name); }
 
     public int getNumber() {
         return this.number;

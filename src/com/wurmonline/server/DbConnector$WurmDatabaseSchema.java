@@ -15,17 +15,17 @@ public enum DbConnector$WurmDatabaseSchema {
     ZONES("WURMZONES"),
     SITE("WURMSITE");
 
-    private final java.lang.String database;
+    private final String database;
 
-    private DbConnector$WurmDatabaseSchema(java.lang.String database) {
+    private DbConnector$WurmDatabaseSchema(String database) {
         this.database = database;
     }
 
-    public java.lang.String toString() {
+    public String toString() {
         return this.name();
     }
 
-    public java.lang.String getDatabase() {
+    public String getDatabase() {
         return this.database;
     }
 }

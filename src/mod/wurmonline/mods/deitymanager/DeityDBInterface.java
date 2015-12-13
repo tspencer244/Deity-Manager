@@ -1,7 +1,3 @@
-//
-// Source code recreated from a .class file by IntelliJ IDEA
-// (powered by Fernflower decompiler)
-//
 package mod.wurmonline.mods.deitymanager;
 
 //import com.ibm.icu.text.MessageFormat;
@@ -12,16 +8,12 @@ import com.wurmonline.server.spells.Spell;
 import com.wurmonline.server.spells.SpellGenerator;
 import com.wurmonline.server.spells.Spells;
 import com.wurmonline.server.utils.DbUtilities;
-//import mod.wurmonline.serverlauncher.LocaleHelper;
 import org.gotti.wurmunlimited.modloader.ReflectionUtil;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-//import java.nio.file.Files;
-//import java.nio.file.Paths;
 import java.sql.*;
 import java.util.HashSet;
-//import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
@@ -30,12 +22,12 @@ import java.util.logging.Logger;
 public class DeityDBInterface {
     private static final String GET_ALL_DEITIES = "SELECT * FROM DEITIES";
     private static final String GET_ALL_DEITY_SPELLS = "SELECT * FROM DEITY_SPELLS WHERE DEITY=?";
+    private static final String GET_DEITY_SPELL_COUNT = "SELECT COUNT(_ID) AS CNT FROM DEITY_SPELLS WHERE DEITY=?";
     private static final String ADD_SPELL_LINK = "INSERT INTO DEITY_SPELLS(SPELL,SPELLNAME,DEITY,ALLOWED) VALUES(?,?,?,?)";
     private static final String SAVE_DEITY = "UPDATE DEITIES SET NAME=?, ALIGNMENT=?, SEX=?, POWER=?, FAITH=?, HOLYITEM=?, FAVOR=?, ATTACK=?, VITALITY=? WHERE ID=?";
     private static final String SAVE_DEITY_SPELL = "UPDATE DEITY_SPELLS SET ALLOWED=? WHERE SPELL=? AND DEITY=?";
     private static final Logger logger = Logger.getLogger(DeityDBInterface.class.getName());
     private static final ConcurrentHashMap<String, DeityData> deityData = new ConcurrentHashMap<>();
-    //private static ResourceBundle messages = LocaleHelper.getBundle("DeityManager");
 
     public static void loadAllData() {
         deityData.clear();
@@ -43,8 +35,10 @@ public class DeityDBInterface {
         Connection spellCon = null;
         PreparedStatement deityPS = null;
         PreparedStatement spellPS = null;
+        PreparedStatement spellCountPS = null;
         ResultSet drs = null;
         ResultSet srs = null;
+        ResultSet spellCountRS = null;
 
         try {
             deityCon = DbConnector.getDeityDbCon();
@@ -88,12 +82,23 @@ public class DeityDBInterface {
                 deity.setFavor(drs.getInt("FAVOR"));
                 deity.setAttack(drs.getFloat("ATTACK"));
                 deity.setVitality(drs.getFloat("VITALITY"));
-
+                
+                // Count spells for this deity in wurmspells.db
+                spellCountPS = spellCon.prepareStatement(GET_DEITY_SPELL_COUNT);
+                spellCountPS.setInt(1, drs.getInt("ID"));
+                spellCountRS = spellCountPS.executeQuery();
+                
+                if (spellCountRS.getInt("CNT") == 0) {
+                	// No results found, so we should populate wurmspells.db with this deity's spells
+                	logger.log(Level.INFO, "The Deity, " + deity.getName() + ", did not have their spells registered in DEITY_SPELLS table.");
+                	fillSpellsDb(Deities.getDeity(drs.getInt("ID")), allSpells, spellCon);
+                }
+                
                 // Spells
                 spellPS = spellCon.prepareStatement(GET_ALL_DEITY_SPELLS);
                 spellPS.setInt(1, drs.getInt("ID"));
                 srs = spellPS.executeQuery();
-
+                
                 Set<Integer> spells = new HashSet<>();
                 
                 while (srs.next()) {
@@ -169,6 +174,35 @@ public class DeityDBInterface {
         } finally {
             DbConnector.returnConnection(deityCon);
             DbConnector.returnConnection(spellCon);
+        }
+    }
+    
+    static void fillSpellsDb(Deity deity, Spell[] allSpells, Connection con) {
+    	try {
+            boolean autoCommit = con.getAutoCommit();
+            con.setAutoCommit(false);
+            PreparedStatement ps = con.prepareStatement(ADD_SPELL_LINK);
+            Set<Spell> deitySpells = deity.getSpells();
+
+            for (Spell spell : allSpells) {
+                ps.setInt(1, spell.number);
+                ps.setString(2, spell.getName());
+                ps.setByte(3, (byte) deity.getNumber());
+                if (deitySpells.contains(spell)) {
+                    ps.setByte(4, (byte) 1);
+                } else {
+                    ps.setByte(4, (byte) 0);
+                }
+                ps.addBatch();
+            }
+            
+            ps.executeBatch();
+            ps.close();
+            con.commit();
+            con.setAutoCommit(autoCommit);
+        } catch(SQLException ex){
+            String name = deity != null ? deity.getName() : "Unknown";
+            logger.log(Level.WARNING, "Failed to add default spells to db for " + name + ". " + ex.getMessage(), ex);
         }
     }
 
